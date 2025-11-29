@@ -19,6 +19,8 @@ export default function Layout({ children }: LayoutProps) {
     { path: '/custos', label: 'Custos', icon: DollarSign },
     { path: '/produtos', label: 'Produtos', icon: Package },
     { path: '/historico', label: 'Histórico', icon: History },
+    // Admin aparece apenas para super_admin
+    ...(isSuperAdmin ? [{ path: '/admin', label: 'Admin', icon: Shield }] : []),
   ];
 
   const handleLogout = async () => {
