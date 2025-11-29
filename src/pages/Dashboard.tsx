@@ -1,17 +1,35 @@
 import { Link } from 'react-router-dom';
-import { Calculator, Package, History, TrendingUp, Calendar, DollarSign, Loader2 } from 'lucide-react';
+import { Calculator, Package, History, TrendingUp, Calendar, DollarSign, Loader2, Shield } from 'lucide-react';
 import { useProdutos, useHistorico } from '../hooks/useSupabase';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Dashboard() {
-  const { produtos, loading: loadingProdutos } = useProdutos();
-  const { historico, loading: loadingHistorico } = useHistorico();
+  const { produtos, loading: loadingProdutos, error: errorProdutos } = useProdutos();
+  const { historico, loading: loadingHistorico, error: errorHistorico } = useHistorico();
+  const { isSuperAdmin } = useAuth();
 
   const loading = loadingProdutos || loadingHistorico;
+  const error = errorProdutos || errorHistorico;
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="flex flex-col items-center justify-center py-12">
         <Loader2 className="animate-spin text-primary-500" size={40} />
+        <p className="text-gray-500 dark:text-gray-400 mt-4">Carregando dados...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="card text-center py-12">
+        <p className="text-red-600 dark:text-red-400">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="btn-primary mt-4"
+        >
+          Tentar Novamente
+        </button>
       </div>
     );
   }
@@ -148,6 +166,26 @@ export default function Dashboard() {
               </h3>
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
                 Cadastre e edite seus produtos químicos
+              </p>
+            </div>
+          </div>
+        </Link>
+
+        {/* Botão Admin - sempre visível para teste, depois restringir */}
+        <Link
+          to="/admin"
+          className="card p-4 sm:p-6 hover:shadow-lg transition-shadow cursor-pointer group border-2 border-purple-200 dark:border-purple-800"
+        >
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="bg-purple-100 dark:bg-purple-900/30 p-3 sm:p-4 rounded-lg group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors flex-shrink-0">
+              <Shield className="text-purple-600 dark:text-purple-400" size={24} />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">
+                Administração
+              </h3>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
+                {isSuperAdmin ? 'Gerenciar usuários do sistema' : 'Acesso restrito a Super Admins'}
               </p>
             </div>
           </div>
