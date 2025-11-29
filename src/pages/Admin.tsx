@@ -164,6 +164,11 @@ export default function Admin() {
     }
   };
 
+  // Debug logs
+  console.log('Admin Page - isSuperAdmin:', isSuperAdmin);
+  console.log('Admin Page - profile:', profile);
+  console.log('Admin Page - profile?.role:', profile?.role);
+
   if (!isSuperAdmin) {
     return (
       <div className="card text-center py-12">
@@ -174,6 +179,13 @@ export default function Admin() {
         <p className="text-gray-600 dark:text-gray-400 mt-2">
           Apenas Super Administradores podem acessar esta página.
         </p>
+        {/* Debug info */}
+        <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded text-left text-sm">
+          <p><strong>Debug Info:</strong></p>
+          <p>Profile: {profile ? 'Carregado' : 'NULL'}</p>
+          <p>Role atual: {profile?.role || 'N/A'}</p>
+          <p>isSuperAdmin: {String(isSuperAdmin)}</p>
+        </div>
       </div>
     );
   }
