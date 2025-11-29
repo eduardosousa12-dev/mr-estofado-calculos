@@ -60,16 +60,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log('Buscando perfil para userId:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      console.log('Resultado do perfil:', { data, error });
+
+      if (error) {
+        console.error('Erro na query de perfil:', error);
+        // Se não encontrou o perfil, pode ser que precisa criar
+        if (error.code === 'PGRST116') {
+          console.log('Perfil não encontrado, tentando criar...');
+        }
+        throw error;
+      }
+
+      console.log('Perfil carregado com sucesso:', data);
+      console.log('Role do usuário:', data?.role);
       setProfile(data as Profile);
     } catch (error) {
       console.error('Erro ao carregar perfil:', error);
+      // Mesmo com erro, não deixa loading infinito
+      setProfile(null);
     } finally {
       setLoading(false);
     }
