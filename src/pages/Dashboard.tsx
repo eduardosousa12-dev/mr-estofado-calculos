@@ -1,10 +1,20 @@
 import { Link } from 'react-router-dom';
-import { Calculator, Package, History, TrendingUp, Calendar, DollarSign } from 'lucide-react';
-import { carregarProdutos, carregarHistorico } from '../services/storage';
+import { Calculator, Package, History, TrendingUp, Calendar, DollarSign, Loader2 } from 'lucide-react';
+import { useProdutos, useHistorico } from '../hooks/useSupabase';
 
 export default function Dashboard() {
-  const produtos = carregarProdutos();
-  const historico = carregarHistorico();
+  const { produtos, loading: loadingProdutos } = useProdutos();
+  const { historico, loading: loadingHistorico } = useHistorico();
+
+  const loading = loadingProdutos || loadingHistorico;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="animate-spin text-primary-500" size={40} />
+      </div>
+    );
+  }
 
   const stats = [
     {

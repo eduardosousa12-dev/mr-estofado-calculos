@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Calculator, Package, History, Home, Calendar, DollarSign, Moon, Sun } from 'lucide-react';
+import { Calculator, Package, History, Home, Calendar, DollarSign, Moon, Sun, LogOut, Shield, User } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,6 +10,7 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const { profile, signOut, isSuperAdmin } = useAuth();
 
   const navItems = [
     { path: '/', label: 'Dashboard', icon: Home },
@@ -18,6 +20,12 @@ export default function Layout({ children }: LayoutProps) {
     { path: '/produtos', label: 'Produtos', icon: Package },
     { path: '/historico', label: 'Histórico', icon: History },
   ];
+
+  const handleLogout = async () => {
+    if (confirm('Deseja realmente sair?')) {
+      await signOut();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
@@ -36,6 +44,27 @@ export default function Layout({ children }: LayoutProps) {
               </h1>
             </Link>
             <div className="flex items-center gap-2">
+              {/* User Info */}
+              <div className="hidden sm:flex items-center gap-2 mr-2 text-sm text-gray-600 dark:text-gray-400">
+                <User size={16} />
+                <span>{profile?.nome}</span>
+              </div>
+
+              {/* Admin Link */}
+              {isSuperAdmin && (
+                <Link
+                  to="/admin"
+                  className={`p-2 rounded-lg transition-colors ${
+                    location.pathname === '/admin'
+                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                  title="Administração"
+                >
+                  <Shield size={20} />
+                </Link>
+              )}
+
               {/* Theme Toggle */}
               <button
                 onClick={toggleTheme}
@@ -44,6 +73,16 @@ export default function Layout({ children }: LayoutProps) {
               >
                 {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
               </button>
+
+              {/* Logout Button */}
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                title="Sair"
+              >
+                <LogOut size={20} />
+              </button>
+
               <nav className="hidden md:flex space-x-1">
                 {navItems.map((item) => {
                   const Icon = item.icon;
@@ -100,4 +139,3 @@ export default function Layout({ children }: LayoutProps) {
     </div>
   );
 }
-

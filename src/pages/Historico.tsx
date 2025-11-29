@@ -1,19 +1,32 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trash2, Eye, Calendar } from 'lucide-react';
-import { ResultadoCalculo } from '../types';
-import { carregarHistorico, removerDoHistorico } from '../services/storage';
+import { Trash2, Eye, Calendar, Loader2 } from 'lucide-react';
+import { useHistorico } from '../hooks/useSupabase';
 import { TIPOS_ESTOFADO_LABELS } from '../constants/presets';
 
 export default function Historico() {
-  const [historico, setHistorico] = useState<ResultadoCalculo[]>(carregarHistorico());
+  const { historico, loading, error, remover } = useHistorico();
 
-  const handleRemover = (resultadoId: string) => {
+  const handleRemover = async (resultadoId: string) => {
     if (confirm('Tem certeza que deseja remover este cálculo do histórico?')) {
-      removerDoHistorico(resultadoId);
-      setHistorico(carregarHistorico());
+      await remover(resultadoId);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="animate-spin text-primary-500" size={40} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="card text-center py-12">
+        <p className="text-red-600 dark:text-red-400">{error}</p>
+      </div>
+    );
+  }
 
   if (historico.length === 0) {
     return (

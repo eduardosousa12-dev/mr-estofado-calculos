@@ -1,23 +1,15 @@
 import { useState } from 'react';
-import { Plus, Trash2, Edit, User, Phone, MapPin, Mail, Calendar, Package } from 'lucide-react';
+import { Plus, Trash2, Edit, User, Phone, MapPin, Mail, Calendar, Package, Loader2 } from 'lucide-react';
 import { Cliente, Servico } from '../types';
 import { TIPOS_SERVICO_LABELS } from '../constants/servicos';
-import {
-  carregarClientes,
-  adicionarCliente,
-  atualizarCliente,
-  removerCliente,
-  adicionarServicoAoCliente,
-  atualizarServicoDoCliente,
-  removerServicoDoCliente
-} from '../services/storage';
+import { useClientes } from '../hooks/useSupabase';
 import { calcularCustoProdutos, calcularLucro } from '../utils/custos';
 import ModalCliente from '../components/ModalCliente';
 import ModalServicoCliente from '../components/ModalServicoCliente';
 import ModalComboServicos from '../components/ModalComboServicos';
 
 export default function Clientes() {
-  const [clientes, setClientes] = useState<Cliente[]>(carregarClientes());
+  const { clientes, loading, error, adicionar, atualizar, remover, adicionarServico, atualizarServico, removerServico } = useClientes();
   const [modalClienteAberto, setModalClienteAberto] = useState(false);
   const [modalServicoAberto, setModalServicoAberto] = useState(false);
   const [modalComboAberto, setModalComboAberto] = useState(false);
@@ -25,18 +17,17 @@ export default function Clientes() {
   const [servicoEditando, setServicoEditando] = useState<{ clienteId: string; servico: Servico | null } | null>(null);
   const [clienteComboId, setClienteComboId] = useState<string | null>(null);
 
-  const handleSalvarCliente = (cliente: Cliente) => {
+  const handleSalvarCliente = async (cliente: Cliente) => {
     if (clienteEditando) {
-      atualizarCliente(clienteEditando.id, cliente);
+      await atualizar(clienteEditando.id, cliente);
     } else {
-      adicionarCliente(cliente);
+      await adicionar(cliente);
     }
-    setClientes(carregarClientes());
     setModalClienteAberto(false);
     setClienteEditando(null);
   };
 
-  const handleSalvarServico = (servico: Servico) => {
+  const handleSalvarServico = async (servico: Servico) => {
     if (!servicoEditando) return;
 
     // Calcular custo automaticamente se tiver cálculo associado
@@ -48,27 +39,24 @@ export default function Clientes() {
     servico.lucro = calcularLucro(servico);
 
     if (servicoEditando.servico) {
-      atualizarServicoDoCliente(servicoEditando.clienteId, servicoEditando.servico.id, servico);
+      await atualizarServico(servicoEditando.servico.id, servico);
     } else {
-      adicionarServicoAoCliente(servicoEditando.clienteId, servico);
+      await adicionarServico(servicoEditando.clienteId, servico);
     }
 
-    setClientes(carregarClientes());
     setModalServicoAberto(false);
     setServicoEditando(null);
   };
 
-  const handleRemoverCliente = (clienteId: string) => {
+  const handleRemoverCliente = async (clienteId: string) => {
     if (confirm('Tem certeza que deseja remover este cliente e todos os seus serviços?')) {
-      removerCliente(clienteId);
-      setClientes(carregarClientes());
+      await remover(clienteId);
     }
   };
 
-  const handleRemoverServico = (clienteId: string, servicoId: string) => {
+  const handleRemoverServico = async (_clienteId: string, servicoId: string) => {
     if (confirm('Tem certeza que deseja remover este serviço?')) {
-      removerServicoDoCliente(clienteId, servicoId);
-      setClientes(carregarClientes());
+      await removerServico(servicoId);
     }
   };
 
@@ -97,24 +85,39 @@ export default function Clientes() {
     setModalComboAberto(true);
   };
 
-  const handleSalvarCombo = (servicos: Servico[]) => {
+  const handleSalvarCombo = async (servicos: Servico[]) => {
     if (!clienteComboId) return;
 
     // Adicionar cada serviço ao cliente
-    servicos.forEach(servico => {
+    for (const servico of servicos) {
       // Calcular custo automaticamente se tiver cálculo associado
       if (servico.calculoId) {
         servico.custoProdutos = calcularCustoProdutos(servico.calculoId);
       }
       // Calcular lucro
       servico.lucro = calcularLucro(servico);
-      adicionarServicoAoCliente(clienteComboId, servico);
-    });
+      await adicionarServico(clienteComboId, servico);
+    }
 
-    setClientes(carregarClientes());
     setModalComboAberto(false);
     setClienteComboId(null);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="animate-spin text-primary-500" size={40} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="card text-center py-12">
+        <p className="text-red-600 dark:text-red-400">{error}</p>
+      </div>
+    );
+  }
 
   const calcularTotaisCliente = (cliente: Cliente) => {
     const custoTotal = cliente.servicos.reduce((sum, s) => sum + s.custoProdutos + (s.custoMaoDeObra || 0), 0);

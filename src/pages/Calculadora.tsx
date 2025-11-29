@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calculator, Ruler, Droplet, Package } from 'lucide-react';
+import { Calculator, Ruler, Droplet, Package, Loader2 } from 'lucide-react';
 import { TipoEstofado, NivelSujidade, DimensoesEstofado, CalculoInput } from '../types';
 import { PRESETS_ESTOFADOS, TIPOS_ESTOFADO_LABELS, NIVEL_SUJIDADE_LABELS } from '../constants/presets';
-import { carregarProdutos } from '../services/storage';
+import { useProdutos } from '../hooks/useSupabase';
 import { calcularResultado } from '../utils/calculos';
 
 export default function Calculadora() {
   const navigate = useNavigate();
-  const produtos = carregarProdutos();
+  const { produtos, loading, error } = useProdutos();
 
   const [tipoEstofado, setTipoEstofado] = useState<TipoEstofado>('sofa-2-lugares');
   const [dimensoes, setDimensoes] = useState<DimensoesEstofado>({
@@ -63,6 +63,22 @@ export default function Calculadora() {
         : [...prev, produtoId]
     );
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="animate-spin text-primary-500" size={40} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="card text-center py-12">
+        <p className="text-red-600 dark:text-red-400">{error}</p>
+      </div>
+    );
+  }
 
   if (produtos.length === 0) {
     return (

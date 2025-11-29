@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
-import { DollarSign, TrendingUp, TrendingDown, Calendar } from 'lucide-react';
-import { carregarClientes } from '../services/storage';
+import { DollarSign, TrendingUp, TrendingDown, Calendar, Loader2 } from 'lucide-react';
+import { useClientes } from '../hooks/useSupabase';
 
 export default function Custos() {
-  const [clientes] = useState(carregarClientes());
+  const { clientes, loading, error } = useClientes();
   const [filtroData, setFiltroData] = useState<string>('');
 
   // Calcular estatísticas gerais
@@ -65,6 +65,22 @@ export default function Custos() {
         ...dados,
       }));
   }, [clientes]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="animate-spin text-primary-500" size={40} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="card text-center py-12">
+        <p className="text-red-600 dark:text-red-400">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6">

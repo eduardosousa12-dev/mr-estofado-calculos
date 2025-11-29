@@ -11,3 +11,4 @@ export const TIPOS_SERVICO_LABELS: Record<TipoServico, string> = {
   'outro': 'Outro',
 };
 
+

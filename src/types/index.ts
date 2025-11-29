@@ -113,7 +113,7 @@ export interface Servico {
   custoMaoDeObra?: number; // Custo da mão de obra (manual)
   precoVenda?: number; // Preço de venda ao cliente
   lucro?: number; // Lucro calculado
-  calculoId: string; // ID do cálculo associado (obrigatório para calcular custo)
+  calculoId?: string; // ID do cálculo associado (opcional)
   dataServico?: string; // Data agendada do serviço
   createdAt: string;
 }

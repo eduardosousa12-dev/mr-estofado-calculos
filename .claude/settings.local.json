@@ -4,7 +4,15 @@
       "Bash(npm run build:*)",
       "Bash(findstr:*)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Mr Estofado Cálculos - App completo\n\n- Calculadora de diluição de produtos químicos para estofados\n- Gestão de produtos com custos e diluições\n- Gestão de clientes e serviços\n- Histórico de cálculos\n- Análise de custos e lucros\n- Modo escuro/claro\n- Design responsivo\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(gh auth status:*)",
+      "Bash(git config:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(npm install:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

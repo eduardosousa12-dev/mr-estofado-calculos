@@ -72,3 +72,4 @@ export const NIVEL_SUJIDADE_LABELS: Record<string, string> = {
   extremo: 'Extremo',
 };
 
+

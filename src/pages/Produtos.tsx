@@ -1,22 +1,21 @@
 import { useState } from 'react';
-import { Plus, Edit, Trash2, Package } from 'lucide-react';
+import { Plus, Edit, Trash2, Package, Loader2 } from 'lucide-react';
 import { Produto } from '../types';
-import { carregarProdutos, adicionarProduto, atualizarProduto, removerProduto } from '../services/storage';
+import { useProdutos } from '../hooks/useSupabase';
 import { TIPOS_ESTOFADO_LABELS, NIVEL_SUJIDADE_LABELS } from '../constants/presets';
 import ModalProduto from '../components/ModalProduto';
 
 export default function Produtos() {
-  const [produtos, setProdutos] = useState<Produto[]>(carregarProdutos());
+  const { produtos, loading, error, adicionar, atualizar, remover } = useProdutos();
   const [modalAberto, setModalAberto] = useState(false);
   const [produtoEditando, setProdutoEditando] = useState<Produto | null>(null);
 
-  const handleSalvar = (produto: Produto) => {
+  const handleSalvar = async (produto: Produto) => {
     if (produtoEditando) {
-      atualizarProduto(produtoEditando.id, produto);
+      await atualizar(produtoEditando.id, produto);
     } else {
-      adicionarProduto(produto);
+      await adicionar(produto);
     }
-    setProdutos(carregarProdutos());
     setModalAberto(false);
     setProdutoEditando(null);
   };
@@ -26,10 +25,9 @@ export default function Produtos() {
     setModalAberto(true);
   };
 
-  const handleRemover = (produtoId: string) => {
+  const handleRemover = async (produtoId: string) => {
     if (confirm('Tem certeza que deseja remover este produto?')) {
-      removerProduto(produtoId);
-      setProdutos(carregarProdutos());
+      await remover(produtoId);
     }
   };
 
@@ -37,6 +35,22 @@ export default function Produtos() {
     setProdutoEditando(null);
     setModalAberto(true);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="animate-spin text-primary-500" size={40} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="card text-center py-12">
+        <p className="text-red-600 dark:text-red-400">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6">

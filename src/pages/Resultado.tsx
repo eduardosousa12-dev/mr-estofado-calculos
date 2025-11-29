@@ -1,18 +1,30 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Save, ArrowLeft, Clock, Ruler, Droplet, User } from 'lucide-react';
+import { Save, ArrowLeft, Clock, Ruler, Droplet, User, Loader2 } from 'lucide-react';
 import { ResultadoCalculo, Servico } from '../types';
 import { TIPOS_ESTOFADO_LABELS, NIVEL_SUJIDADE_LABELS } from '../constants/presets';
-import { adicionarAoHistorico, carregarHistorico, carregarClientes, adicionarServicoAoCliente, carregarProdutos } from '../services/storage';
+import { useProdutos, useClientes, useHistorico } from '../hooks/useSupabase';
 
 export default function Resultado() {
   const location = useLocation();
   const navigate = useNavigate();
   const resultado = location.state?.resultado as ResultadoCalculo | undefined;
-  const clientes = carregarClientes();
-  const produtos = carregarProdutos();
+  const { clientes, loading: loadingClientes, adicionarServico } = useClientes();
+  const { produtos, loading: loadingProdutos } = useProdutos();
+  const { historico, loading: loadingHistorico, adicionar: adicionarAoHistorico } = useHistorico();
 
   const [clienteSelecionado, setClienteSelecionado] = useState<string>('');
+  const [salvando, setSalvando] = useState(false);
+
+  const loading = loadingClientes || loadingProdutos || loadingHistorico;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="animate-spin text-primary-500" size={40} />
+      </div>
+    );
+  }
 
   if (!resultado) {
     return (
@@ -26,7 +38,7 @@ export default function Resultado() {
   }
 
   // Calcula o custo total dos produtos usados
-  const calcularCustoProdutos = () => {
+  const calcularCustoProdutosTotal = () => {
     let custoTotal = 0;
     resultado.resultadosProdutos.forEach(rp => {
       const produto = produtos.find(p => p.id === rp.produtoId);
@@ -38,30 +50,37 @@ export default function Resultado() {
     return custoTotal;
   };
 
-  const handleSalvar = () => {
-    const historico = carregarHistorico();
-    const jaExiste = historico.some(h => h.id === resultado.id);
+  const handleSalvar = async () => {
+    setSalvando(true);
+    try {
+      const jaExiste = historico.some(h => h.id === resultado.id);
 
-    if (!jaExiste) {
-      adicionarAoHistorico(resultado);
-    }
+      if (!jaExiste) {
+        await adicionarAoHistorico(resultado);
+      }
 
-    // Se um cliente foi selecionado, criar um serviço para ele
-    if (clienteSelecionado) {
-      const novoServico: Servico = {
-        id: crypto.randomUUID(),
-        tipo: resultado.input.tipoEstofado.startsWith('colchao') ? 'colchao' : 'sofa',
-        descricao: `${TIPOS_ESTOFADO_LABELS[resultado.input.tipoEstofado]} - ${NIVEL_SUJIDADE_LABELS[resultado.input.nivelSujidade]}`,
-        custoProdutos: calcularCustoProdutos(),
-        calculoId: resultado.id,
-        createdAt: new Date().toISOString(),
-      };
+      // Se um cliente foi selecionado, criar um serviço para ele
+      if (clienteSelecionado) {
+        const novoServico: Servico = {
+          id: crypto.randomUUID(),
+          tipo: resultado.input.tipoEstofado.startsWith('colchao') ? 'colchao' : 'sofa',
+          descricao: `${TIPOS_ESTOFADO_LABELS[resultado.input.tipoEstofado]} - ${NIVEL_SUJIDADE_LABELS[resultado.input.nivelSujidade]}`,
+          custoProdutos: calcularCustoProdutosTotal(),
+          calculoId: resultado.id,
+          createdAt: new Date().toISOString(),
+        };
 
-      adicionarServicoAoCliente(clienteSelecionado, novoServico);
-      const clienteNome = clientes.find(c => c.id === clienteSelecionado)?.nome;
-      alert(`Cálculo salvo e vinculado ao cliente "${clienteNome}"!`);
-    } else {
-      alert('Cálculo salvo no histórico!');
+        await adicionarServico(clienteSelecionado, novoServico);
+        const clienteNome = clientes.find(c => c.id === clienteSelecionado)?.nome;
+        alert(`Cálculo salvo e vinculado ao cliente "${clienteNome}"!`);
+      } else {
+        alert('Cálculo salvo no histórico!');
+      }
+    } catch (err) {
+      alert('Erro ao salvar. Tente novamente.');
+      console.error(err);
+    } finally {
+      setSalvando(false);
     }
   };
 
@@ -87,9 +106,13 @@ export default function Resultado() {
             <span className="hidden sm:inline">Novo Cálculo</span>
             <span className="sm:hidden">Novo</span>
           </button>
-          <button onClick={handleSalvar} className="btn-primary text-sm">
-            <Save size={16} className="inline mr-1 sm:mr-2" />
-            Salvar
+          <button onClick={handleSalvar} disabled={salvando} className="btn-primary text-sm">
+            {salvando ? (
+              <Loader2 size={16} className="inline mr-1 sm:mr-2 animate-spin" />
+            ) : (
+              <Save size={16} className="inline mr-1 sm:mr-2" />
+            )}
+            {salvando ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
       </div>
